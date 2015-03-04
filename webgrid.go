@@ -98,7 +98,7 @@ func NewRender(format string, m func(i interface{}, f interface{})) *Render {
 
 	reqChan := r.In("req")
 
-	reqChan.Or(func(i interface{}) {
+	reqChan.Receive(func(i interface{}) {
 		r.Handler(i, r)
 	})
 
@@ -149,7 +149,12 @@ func FileRender() *Render {
 			bu[k] = v.(byte)
 		}
 
-		res.Header().Set("Content-Type", ctype)
+		if ctype == "" {
+			res.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		} else {
+			res.Header().Set("Content-Type", ctype)
+		}
+
 		res.Write(bu)
 	})
 	return r
@@ -213,7 +218,7 @@ func StripPath(stripBase string) *grids.Grid {
 	ssb := strings.TrimPrefix(stripBase, "/")
 	reqs := r.In("req")
 
-	reqs.End(func(packet interface{}, next func(i interface{})) {
+	reqs.Decide(func(packet interface{}, next func(i interface{})) {
 		resq, err := packet.(*grids.GridPacket)
 		if !err {
 			return
@@ -281,7 +286,7 @@ func NewStaticBase(base string, stripbase string) *StaticServ {
 
 	rd := reader.Out("res")
 
-	rd.Or(func(i interface{}) {
+	rd.Receive(func(i interface{}) {
 		resq, err := i.(*grids.GridPacket)
 
 		if !err {
@@ -301,12 +306,12 @@ func NewStaticBase(base string, stripbase string) *StaticServ {
 	}
 
 	cerror := control.Out("err")
-	cerror.Or(errorHandler)
+	cerror.Receive(errorHandler)
 	rerror := reader.Out("err")
-	rerror.Or(errorHandler)
+	rerror.Receive(errorHandler)
 
 	cres := control.Out("res")
-	cres.Or(func(i interface{}) {
+	cres.Receive(func(i interface{}) {
 		resq, err := i.(*grids.GridPacket)
 
 		if !err {
@@ -318,7 +323,7 @@ func NewStaticBase(base string, stripbase string) *StaticServ {
 
 	st.InBind("req", stripper.In("req"))
 
-	stripper.Out("res").End(func(packet interface{}, next func(i interface{})) {
+	stripper.Out("res").Decide(func(packet interface{}, next func(i interface{})) {
 		resq, err := packet.(*grids.GridPacket)
 
 		if !err {
@@ -404,7 +409,7 @@ func NewStaticServo(base string, strip string) *StaticServ {
 	})
 
 	serr := st.Out("err")
-	serr.Or(func(i interface{}) {
+	serr.Receive(func(i interface{}) {
 		resq, err := i.(*grids.GridPacket)
 
 		if !err {
@@ -415,7 +420,7 @@ func NewStaticServo(base string, strip string) *StaticServ {
 	})
 
 	sres := st.Out("res")
-	sres.Or(func(i interface{}) {
+	sres.Receive(func(i interface{}) {
 		resq, err := i.(*grids.GridPacket)
 
 		if !err {
