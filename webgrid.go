@@ -516,7 +516,7 @@ func NewConsoler() *grids.Grid {
 
 	g.OrIn("in", func(g *grids.GridPacket) {
 		UseHttpPacket(g, func(_ http.ResponseWriter, req *http.Request) {
-			fmt.Println("New Request:", req.URL.Path, "Method:", req.Method)
+			fmt.Println("New Request:", req.URL.Path, "Method:", req.Method, "Query:", req.URL.RawQuery)
 		})
 	})
 
