@@ -86,7 +86,7 @@ These helpers provided the necessary struct creation of the different different 
 -   UseHttpPacket(packet *GridPacket,callback func(rw http.ResponseWriter,req *http.Request))
     This is a helper function to be attach to grid channels to easily gain access and ensure the gridpackets comes with the necessary http.ResponseWriter and http.Request
     
-        ```
+        
 
                 m := NewMethodFilter("get")
 
@@ -96,12 +96,12 @@ These helpers provided the necessary struct creation of the different different 
                     })
                 })
         
-        ```
+        
 
 -   NewHttpConsole(s *HttpServ) *grids.Grid
   This returns a new grid struct which prints out http request from the HttpServ struct passed to it
 
-        ```
+        
             app := webgrid.NewHttp()
             console = webgrid.NewHttpConsole(app)
 
@@ -110,12 +110,12 @@ These helpers provided the necessary struct creation of the different different 
             if err != nil {
                 panic("server exploded")
             }
-        ```
+      
 
 -   NewStaticConsole(s *StaticServ)  *grids.Grid
   This returns a new consoler struct for printing from a StaticServ struct when used as a static server.
 
-        ```
+        
             app := webgrid.NewStaticServo("..", "")
             console = webgrid.NewStaticConsole(app)
 
@@ -125,26 +125,26 @@ These helpers provided the necessary struct creation of the different different 
                 panic("server exploded")
             }
 
-        ```
+        
 
 -   NewRoute(pattern string,strict bool) *Route
   This returns a new route grid struct ready to filter out request packets coming in
 
-        ```
+        
             home := NewRoute(`/app/{id:[/d+]}/log`,false)
-        ```
+        
 
 -   NewMethodFilter(method string) *MethodFilter
   This returns a new methodfilter grid struct ready to filter out request packets coming in based on the request method
 
-        ```
+        
             gets := NewMethodFIlter(“get”)
-        ```
+        
 
 -   NewFileView(file_path string) *View
   This returns a new view grid struct ready to render the file_path content as the response to the request
 
-        ```
+        
             app := webgrid.NewHttp()
 
             index := webgrid.NewRoute("/", true)
@@ -153,26 +153,26 @@ These helpers provided the necessary struct creation of the different different 
             index.OutBind("yes", home.In("req"))
 
             app.OutBind("res", index.In("req"))
-        ```
+        
 
 -   FileRender() *Render
   This returns a renderer that renders the data within the packets buffer as a file response for the http.request
 
-        ```
+        
             render := FileRender()
             render.OutSend(“res”,...)
-        ```
+        
 
 -   NewReply(action func(res http.ResponseWriter, req *http.Request, p *grids.GridPacket)
   This returns a reply struct which takes a callback for execution on every http gridpacket
 
-        ```
+        
             hello := NewReply(func (res http.Responsewriter,req *http.Request,packet grids.GridPacket){
                 res.WriteStatus(200)
                 res.Write([]byte(“Hello!”))
                 res.Close()
             })
-        ```
+        
 
 -   NewRender(format string,callback func(...)) *Render
   This returns a basic render struct with the channels added and set to executive on each packet comming in
