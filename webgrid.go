@@ -75,13 +75,13 @@ type Route struct {
 }
 
 func UseHttpPacket(resq *grids.GridPacket, caller func(rw http.ResponseWriter, r *http.Request)) {
-	req, ok := resq.Body["req"].(*http.Request)
+	req, ok := resq.Get("req").(*http.Request)
 
 	if !ok {
 		return
 	}
 
-	res, ek := resq.Body["res"].(http.ResponseWriter)
+	res, ek := resq.Get("res").(http.ResponseWriter)
 
 	if !ek {
 		return
@@ -120,13 +120,13 @@ func FileRender() *Render {
 			return
 		}
 
-		req, ok := resq.Body["req"].(*http.Request)
+		req, ok := resq.Get("req").(*http.Request)
 
 		if !ok {
 			return
 		}
 
-		res, ek := resq.Body["res"].(http.ResponseWriter)
+		res, ek := resq.Get("res").(http.ResponseWriter)
 
 		if !ek {
 			return
@@ -136,7 +136,7 @@ func FileRender() *Render {
 
 		uri := req.URL.Path
 
-		if file, ok := resq.Body["file"].(string); !ok {
+		if file, ok := resq.Get("file").(string); !ok {
 			ctype = mime.TypeByExtension(fpath.Ext(uri))
 		} else {
 			ctype = mime.TypeByExtension(fpath.Ext(file))
@@ -192,13 +192,13 @@ func ErrorRender(response func(rw http.ResponseWriter, r *http.Request)) *Render
 			return
 		}
 
-		req, ok := resq.Body["req"].(*http.Request)
+		req, ok := resq.Get("req").(*http.Request)
 
 		if !ok {
 			return
 		}
 
-		res, ek := resq.Body["res"].(http.ResponseWriter)
+		res, ek := resq.Get("res").(http.ResponseWriter)
 
 		if !ek {
 			return
@@ -224,17 +224,17 @@ func StripPath(stripBase string) *grids.Grid {
 			return
 		}
 
-		req, ok := resq.Body["req"].(*http.Request)
+		req, ok := resq.Get("req").(*http.Request)
 
 		if !ok {
 			return
 		}
 
-		_, ek := resq.Body["res"].(http.ResponseWriter)
+		// _, ek := resq.Get("res").(http.ResponseWriter)
 
-		if !ek {
-			return
-		}
+		// if !ek {
+		// 	return
+		// }
 
 		path := strings.TrimPrefix(fpath.Clean(req.URL.Path), "/")
 		hs := strings.HasPrefix(path, stripBase)
@@ -250,7 +250,7 @@ func StripPath(stripBase string) *grids.Grid {
 
 		path = fpath.Clean(path)
 
-		resq.Body["file"] = path
+		resq.Set("file", path)
 
 		r.OutSend("res", resq)
 
@@ -330,7 +330,7 @@ func NewStaticBase(base string, stripbase string) *StaticServ {
 			return
 		}
 
-		path, ok := resq.Body["file"]
+		path, ok := resq.Get("file").(string)
 
 		if !ok {
 			return
@@ -434,13 +434,17 @@ func NewStaticServo(base string, strip string) *StaticServ {
 }
 
 func (s *StaticServ) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	vals := map[interface{}]interface{}{"res": rw, "req": r}
-	s.InSend("req", grids.CreateGridPacket(vals))
+	pack := grids.NewPacket()
+	pack.Set("res", rw)
+	pack.Set("req", r)
+	s.InSend("req", pack)
 }
 
 func (h *HttpServ) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	vals := map[interface{}]interface{}{"res": rw, "req": r}
-	h.InSend("req", grids.CreateGridPacket(vals))
+	pack := grids.NewPacket()
+	pack.Set("res", rw)
+	pack.Set("req", r)
+	h.InSend("req", pack)
 }
 
 func NewMethodFilter(method string) *MethodFilter {
@@ -450,7 +454,7 @@ func NewMethodFilter(method string) *MethodFilter {
 	m.NewOut("res")
 	m.NewOut("rej")
 
-	m.AndIn("req", func(p *grids.GridPacket, next func(f interface{})) {
+	m.AndIn("req", func(p *grids.GridPacket, next func(f *grids.GridPacket)) {
 
 		UseHttpPacket(p, func(res http.ResponseWriter, req *http.Request) {
 			med := strings.ToLower(req.Method)
@@ -473,7 +477,7 @@ func NewReply(action ActionMethod) *Reply {
 	m := &Reply{action, grids.NewGrid("Reply.Action")}
 	m.NewIn("req")
 
-	m.AndIn("req", func(p *grids.GridPacket, next func(f interface{})) {
+	m.AndIn("req", func(p *grids.GridPacket, next func(f *grids.GridPacket)) {
 		UseHttpPacket(p, func(res http.ResponseWriter, req *http.Request) {
 			action(res, req, p)
 			next(p)
@@ -490,7 +494,7 @@ func NewRoute(pattern string, strict bool) *Route {
 	m.NewOut("no")
 	m.NewOut("yes")
 
-	m.AndIn("req", func(p *grids.GridPacket, next func(f interface{})) {
+	m.AndIn("req", func(p *grids.GridPacket, next func(f *grids.GridPacket)) {
 		UseHttpPacket(p, func(res http.ResponseWriter, req *http.Request) {
 			path := req.URL.Path
 
@@ -501,7 +505,7 @@ func NewRoute(pattern string, strict bool) *Route {
 				return
 			}
 
-			p.Body["params"] = params
+			p.Set("params", params)
 			m.OutSend("yes", p)
 			next(p)
 		})
