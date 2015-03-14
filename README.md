@@ -88,18 +88,12 @@ These helpers provided the necessary struct creation of the different different 
     
         ```
 
-                m := &MethodFilter{method, grids.NewGrid("MethodFilter")}
-
-                m.NewIn("req")
-                m.NewOut("res")
-                m.NewOut("rej")
+                m := NewMethodFilter("get")
 
                 m.AndIn("req", func(p *grids.GridPacket, next func(f *grids.GridPacket)) {
-
-                    UseHttpPacket(p, func(res http.ResponseWriter, req *http.Request) {
+                    UseHttpPacket[](p, func(res http.ResponseWriter, req *http.Request) {
                         //do something
                     })
-
                 })
         
         ```
